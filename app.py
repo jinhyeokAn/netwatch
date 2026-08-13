@@ -265,13 +265,14 @@ def subnet_tool():
     return render_template("subnet.html", result=result, error=error, cidr_input=cidr_input)
 
 
+models.init_db()
+
+admin_username = os.environ.get("ADMIN_USERNAME", "admin")
+admin_password = os.environ.get("ADMIN_PASSWORD", "changeme123")
+models.ensure_default_admin(admin_username, generate_password_hash(admin_password))
+
+start_background_monitor()
+report.start_daily_report_scheduler()
+
 if __name__ == "__main__":
-    models.init_db()
-
-    admin_username = os.environ.get("ADMIN_USERNAME", "admin")
-    admin_password = os.environ.get("ADMIN_PASSWORD", "changeme123")
-    models.ensure_default_admin(admin_username, generate_password_hash(admin_password))
-
-    start_background_monitor()
-    report.start_daily_report_scheduler()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
