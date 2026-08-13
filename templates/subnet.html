@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">서브넷 계산기</h3>
+
+<form method="post" class="row g-2 mb-4" style="max-width: 500px;">
+  <div class="col-8">
+    <input class="form-control" name="cidr" placeholder="예: 192.168.1.0/24" value="{{ cidr_input }}" required>
+  </div>
+  <div class="col-4"><button class="btn btn-primary w-100">계산</button></div>
+</form>
+
+{% if error %}
+  <div class="alert alert-danger">입력 오류: {{ error }}</div>
+{% endif %}
+
+{% if result %}
+<table class="table" style="max-width: 500px;">
+  <tbody>
+    <tr><th>네트워크 주소</th><td>{{ result.network }}/{{ result.prefixlen }}</td></tr>
+    <tr><th>서브넷 마스크</th><td>{{ result.netmask }}</td></tr>
+    <tr><th>브로드캐스트 주소</th><td>{{ result.broadcast }}</td></tr>
+    <tr><th>전체 주소 개수</th><td>{{ result.total_addresses }}</td></tr>
+    <tr><th>사용 가능 호스트 수</th><td>{{ result.usable_hosts }}</td></tr>
+    <tr><th>사용 가능 범위</th><td>{{ result.first_host }} ~ {{ result.last_host }}</td></tr>
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block head_extra %}
+<meta http-equiv="refresh" content="{{ refresh_sec }}">
+{% endblock %}
+{% block content %}
+{% if down_count %}
+<div class="alert-bar">
+  <span>[CRITICAL] {{ down_count }}대 장애 감지됨</span>
+  <span>UP: {{ up_count }} / DOWN: {{ down_count }}</span>
+</div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-baseline mb-4">
+  <h3 class="mb-0">장비 상태</h3>
+  <span class="text-muted mono" style="font-size:12px;">{{ rows|length }}대 · {{ refresh_sec }}초마다 갱신</span>
+</div>
+
+{% if rows|length == 0 %}
+  <p class="text-muted">등록된 장비가 없습니다. <a href="{{ url_for('devices') }}">장비 관리</a>에서 추가하세요.</p>
+{% else %}
+<div class="bento-grid">
+  <div class="stat-tile">
+    <div class="stat-label">UPTIME_PERCENTAGE</div>
+    <div class="stat-value">{{ uptime_pct if uptime_pct is not none else '-' }}{{ '%' if uptime_pct is not none }}</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-label">DEVICES_UP</div>
+    <div class="stat-value">{{ up_count }}</div>
+  </div>
+  <div class="stat-tile {{ 'critical' if down_count }}">
+    <div class="stat-label">DEVICES_DOWN</div>
+    <div class="stat-value">{{ down_count }}</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-label">AVG_LATENCY</div>
+    <div class="stat-value">{{ avg_latency if avg_latency is not none else '-' }}{{ 'ms' if avg_latency is not none }}</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  {% for row in rows %}
+  <div class="col-md-4">
+    <div class="card {{ 'border-success' if row.is_up else ('border-danger' if row.is_up is not none else 'border-secondary') }}" style="animation-delay: {{ loop.index0 * 40 }}ms;">
+      <div class="card-body">
+        <h5 class="card-title">
+          {{ row.device.name }}
+          {% if row.under_maintenance %}
+            <span class="status-pill status-maint">{{ icon('wrench') }}점검중</span>
+          {% elif row.is_up is none %}
+            <span class="status-pill status-pending">{{ icon('clock') }}대기중</span>
+          {% elif row.is_up %}
+            <span class="status-pill status-up">{{ icon('check') }}UP</span>
+          {% else %}
+            <span class="status-pill status-down">{{ icon('x') }}DOWN</span>
+          {% endif %}
+          {% if row.flapping %}<span class="status-pill status-warn">{{ icon('warning') }}불안정</span>{% endif %}
+          {% if row.latency_anomaly %}<span class="status-pill status-slow">{{ icon('chart') }}느림</span>{% endif %}
+          {% if row.ssl_days_left is not none and row.ssl_days_left <= 30 %}
+            <span class="status-pill {{ 'status-down' if row.ssl_days_left <= 7 else 'status-warn' }}">{{ icon('lock') }}D-{{ row.ssl_days_left }}</span>
+          {% endif %}
+        </h5>
+        <p class="card-text mb-1 mono" style="color: var(--color-text-muted);">{{ row.device.ip }}</p>
+        <p class="card-text text-muted small mb-0">
+          {% if row.latency_ms %}응답속도: <span class="mono">{{ row.latency_ms }} ms</span><br>{% endif %}
+          {% if row.checked_at %}마지막 체크: <span class="mono">{{ row.checked_at }}</span>{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

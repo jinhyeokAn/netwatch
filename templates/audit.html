@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">감사 로그</h3>
+
+<table class="table table-striped">
+  <thead><tr><th>시간</th><th>사용자</th><th>작업</th><th>내용</th></tr></thead>
+  <tbody>
+    {% for log in logs %}
+    <tr>
+      <td>{{ log.created_at }}</td>
+      <td>{{ log.username }}</td>
+      <td>{{ log.action }}</td>
+      <td>{{ log.detail }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

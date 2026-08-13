@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">장애 이력 (DOWN 감지 로그)</h3>
+
+<form method="get" class="row g-2 mb-3" style="max-width: 400px;">
+  <div class="col-9">
+    <input class="form-control" name="q" placeholder="장비명 또는 IP 검색" value="{{ q or '' }}">
+  </div>
+  <div class="col-3">
+    <button class="btn btn-primary w-100">검색</button>
+  </div>
+</form>
+
+{% if incidents|length == 0 %}
+  <p class="text-muted">{% if q %}"{{ q }}" 검색 결과가 없습니다.{% else %}아직 감지된 장애가 없습니다.{% endif %}</p>
+{% endif %}
+
+<table class="table table-striped">
+  <thead>
+    <tr><th>시간</th><th>장비명</th><th>IP</th></tr>
+  </thead>
+  <tbody>
+    {% for i in incidents %}
+    <tr>
+      <td>{{ i.checked_at }}</td>
+      <td>{{ i.name }}</td>
+      <td>{{ i.ip }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

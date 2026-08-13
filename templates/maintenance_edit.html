@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">작업 일정 수정</h3>
+
+<form method="post" class="row g-2" style="max-width: 500px;">
+  <div class="col-12">
+    <label class="form-label">대상 장비</label>
+    <select class="form-select" name="device_id" required>
+      {% for d in devices %}
+        <option value="{{ d.id }}" {% if d.id == window.device_id %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12">
+    <label class="form-label">작업명</label>
+    <input class="form-control" name="title" value="{{ window.title }}" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label">시작</label>
+    <input class="form-control" type="datetime-local" name="start_at" value="{{ window.start_at }}" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label">종료</label>
+    <input class="form-control" type="datetime-local" name="end_at" value="{{ window.end_at }}" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label">비고</label>
+    <input class="form-control" name="note" value="{{ window.note or '' }}">
+  </div>
+  <div class="col-12 mt-3">
+    <button class="btn btn-primary">저장</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('maintenance') }}">취소</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">통계 (가동률 / MTTR)</h3>
+
+<form method="get" class="row g-2 mb-3" style="max-width: 300px;">
+  <div class="col-8">
+    <select class="form-select" name="days">
+      <option value="7" {% if days == 7 %}selected{% endif %}>최근 7일</option>
+      <option value="30" {% if days == 30 %}selected{% endif %}>최근 30일</option>
+      <option value="90" {% if days == 90 %}selected{% endif %}>최근 90일</option>
+    </select>
+  </div>
+  <div class="col-4"><button class="btn btn-primary w-100">조회</button></div>
+</form>
+
+<form method="post" action="{{ url_for('send_report') }}" class="mb-4">
+  <input type="hidden" name="days" value="{{ days }}">
+  <button class="btn btn-outline-primary">📧 지금 리포트 이메일로 발송 (최근 {{ days }}일)</button>
+</form>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>장비</th>
+      <th>가동률</th>
+      <th>장애 횟수</th>
+      <th>평균 복구시간(MTTR)</th>
+      <th>체크 횟수</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in stats %}
+    <tr>
+      <td>{{ s.device.name }} ({{ s.device.ip }})</td>
+      <td>
+        {% if s.uptime_pct is none %}
+          <span class="text-muted">데이터 없음</span>
+        {% else %}
+          <span class="{{ 'text-success' if s.uptime_pct >= 99 else ('text-warning' if s.uptime_pct >= 95 else 'text-danger') }}">
+            {{ s.uptime_pct }}%
+          </span>
+        {% endif %}
+      </td>
+      <td>{{ s.incident_count }}</td>
+      <td>{{ s.mttr_minutes ~ "분" if s.mttr_minutes is not none else "-" }}</td>
+      <td>{{ s.total_checks }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

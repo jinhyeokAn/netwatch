@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">사용자 관리</h3>
+
+<form method="post" class="row g-2 mb-4" style="max-width: 500px;">
+  <div class="col-5"><input class="form-control" name="username" placeholder="아이디" required></div>
+  <div class="col-5"><input class="form-control" type="password" name="password" placeholder="비밀번호" required></div>
+  <div class="col-2"><button class="btn btn-primary w-100">추가</button></div>
+</form>
+
+<table class="table table-striped" style="max-width: 600px;">
+  <thead><tr><th>아이디</th><th>생성일</th><th></th></tr></thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td>{{ u.created_at }}</td>
+      <td>
+        <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}" onsubmit="return confirm('{{ u.username }} 삭제할까요?');">
+          <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

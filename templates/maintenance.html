@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">작업 일정 (영향도 관리)</h3>
+
+<form method="post" class="row g-2 mb-4">
+  <div class="col-md-2">
+    <select class="form-select" name="device_id" required>
+      <option value="" disabled selected>대상 장비</option>
+      {% for d in devices %}
+        <option value="{{ d.id }}">{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2"><input class="form-control" name="title" placeholder="작업명" required></div>
+  <div class="col-md-2"><input class="form-control" type="datetime-local" name="start_at" required></div>
+  <div class="col-md-2"><input class="form-control" type="datetime-local" name="end_at" required></div>
+  <div class="col-md-2"><input class="form-control" name="note" placeholder="비고"></div>
+  <div class="col-md-2"><button class="btn btn-primary w-100">등록</button></div>
+</form>
+
+<table class="table table-striped">
+  <thead>
+    <tr><th>장비</th><th>작업명</th><th>시작</th><th>종료</th><th>비고</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for w in windows %}
+    <tr>
+      <td>{{ w.device_name }}</td>
+      <td>{{ w.title }}</td>
+      <td>{{ w.start_at }}</td>
+      <td>{{ w.end_at }}</td>
+      <td>{{ w.note }}</td>
+      <td><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('edit_maintenance', window_id=w.id) }}">수정</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

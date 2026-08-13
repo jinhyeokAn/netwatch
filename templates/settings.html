@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">설정</h3>
+
+<form method="post" class="row g-2" style="max-width: 500px;">
+  <div class="col-12">
+    <label class="form-label">리포트 받을 이메일 주소</label>
+    <input class="form-control" type="email" name="email_to" value="{{ email_to }}" placeholder="example@gmail.com">
+    <div class="form-text">비워두면 .env의 EMAIL_TO 값을 씀. 여기서 저장하면 이 값이 우선 적용됨.</div>
+  </div>
+  <div class="col-12 mt-2">
+    <button class="btn btn-primary">저장</button>
+  </div>
+</form>
+{% endblock %}

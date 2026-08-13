@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">장비 수정</h3>
+
+<form method="post" class="row g-2" style="max-width: 500px;">
+  <div class="col-12">
+    <label class="form-label">장비명</label>
+    <input class="form-control" name="name" value="{{ device.name }}" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label">IP</label>
+    <input class="form-control" name="ip" value="{{ device.ip }}" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label">서브넷</label>
+    <input class="form-control" name="subnet" value="{{ device.subnet or '' }}">
+  </div>
+  <div class="col-12">
+    <label class="form-label">위치</label>
+    <input class="form-control" name="location" value="{{ device.location or '' }}">
+  </div>
+  <div class="col-12">
+    <label class="form-label">담당자</label>
+    <input class="form-control" name="owner" value="{{ device.owner or '' }}">
+  </div>
+  <div class="col-12">
+    <label class="form-label">SSL 체크 도메인 (선택)</label>
+    <input class="form-control" name="ssl_host" value="{{ device.ssl_host or '' }}" placeholder="예: example.com">
+  </div>
+  <div class="col-12 mt-3">
+    <button class="btn btn-primary">저장</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('devices') }}">취소</a>
+  </div>
+</form>
+{% endblock %}
