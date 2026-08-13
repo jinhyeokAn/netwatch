@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # must run before importing modules that read env vars at import time
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import models
@@ -19,7 +19,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
 @app.before_request
 def require_login():
-    if request.endpoint in ("login", "static") or request.endpoint is None:
+    if request.endpoint in ("login", "static", "push_checkin") or request.endpoint is None:
         return
     if "username" not in session:
         return redirect(url_for("login"))
@@ -144,11 +144,12 @@ def devices():
             location=request.form.get("location", ""),
             owner=request.form.get("owner", ""),
             ssl_host=request.form.get("ssl_host", ""),
+            check_type=request.form.get("check_type", "ping"),
         )
         models.log_action(session["username"], "장비 추가", f"{request.form['name']} ({request.form['ip']})")
         return redirect(url_for("devices"))
 
-    return render_template("devices.html", devices=models.list_devices())
+    return render_template("devices.html", devices=models.list_devices(), push_base_url=request.url_root.rstrip("/"))
 
 
 @app.route("/devices/<int:device_id>/edit", methods=["GET", "POST"])
@@ -162,12 +163,21 @@ def edit_device(device_id):
             location=request.form.get("location", ""),
             owner=request.form.get("owner", ""),
             ssl_host=request.form.get("ssl_host", ""),
+            check_type=request.form.get("check_type", "ping"),
         )
         models.log_action(session["username"], "장비 수정", f"id={device_id} {request.form['name']}")
         return redirect(url_for("devices"))
 
     device = models.get_device(device_id)
-    return render_template("device_edit.html", device=device)
+    return render_template("device_edit.html", device=device, push_base_url=request.url_root.rstrip("/"))
+
+
+@app.route("/push/<token>", methods=["POST"])
+def push_checkin(token):
+    device = models.touch_push(token)
+    if not device:
+        return jsonify({"error": "invalid token"}), 404
+    return jsonify({"ok": True, "device": device["name"]})
 
 
 @app.route("/devices/<int:device_id>/delete", methods=["POST"])

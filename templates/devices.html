@@ -8,13 +8,19 @@
   <div class="col-md-2"><input class="form-control" name="subnet" placeholder="서브넷"></div>
   <div class="col-md-2"><input class="form-control" name="location" placeholder="위치"></div>
   <div class="col-md-2"><input class="form-control" name="owner" placeholder="담당자"></div>
+  <div class="col-md-2">
+    <select class="form-select" name="check_type">
+      <option value="ping">일반(ping)</option>
+      <option value="push">에이전트(하트비트)</option>
+    </select>
+  </div>
   <div class="col-md-2"><input class="form-control" name="ssl_host" placeholder="SSL 체크 도메인 (선택)"></div>
   <div class="col-md-2"><button class="btn btn-primary w-100">추가</button></div>
 </form>
 
 <table class="table table-striped">
   <thead>
-    <tr><th>ID</th><th>이름</th><th>IP</th><th>서브넷</th><th>위치</th><th>담당자</th><th>SSL 도메인</th><th></th></tr>
+    <tr><th>ID</th><th>이름</th><th>IP</th><th>서브넷</th><th>위치</th><th>담당자</th><th>방식</th><th>SSL 도메인</th><th></th></tr>
   </thead>
   <tbody>
     {% for d in devices %}
@@ -25,6 +31,13 @@
       <td>{{ d.subnet }}</td>
       <td>{{ d.location }}</td>
       <td>{{ d.owner }}</td>
+      <td>
+        {% if d.check_type == 'push' %}
+          <span class="status-pill status-maint">에이전트</span>
+        {% else %}
+          ping
+        {% endif %}
+      </td>
       <td>{{ d.ssl_host or '' }}</td>
       <td>
         <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('edit_device', device_id=d.id) }}">수정</a>

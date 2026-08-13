@@ -14,6 +14,7 @@ import models
 
 CHECK_INTERVAL_SEC = int(os.environ.get("CHECK_INTERVAL_SEC", "30"))
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
+PUSH_STALE_SEC = int(os.environ.get("PUSH_STALE_SEC", "90"))
 
 FLAP_WINDOW = 10       # how many recent checks to look at
 FLAP_THRESHOLD = 3     # state flips within the window counts as "flapping"
@@ -49,6 +50,15 @@ def ping_once(ip, timeout_sec=2):
     match = _LATENCY_RE.search(result.stdout)
     latency = float(match.group(1)) if match else None
     return True, latency
+
+
+def push_is_up(last_push_at):
+    """Push/heartbeat devices: up if an agent checked in within PUSH_STALE_SEC."""
+    if not last_push_at:
+        return False
+    last = datetime.strptime(last_push_at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    age = (datetime.now(timezone.utc) - last).total_seconds()
+    return age <= PUSH_STALE_SEC
 
 
 def send_discord_alert(message):
@@ -112,7 +122,10 @@ def check_all_devices():
 
     for device in models.list_devices():
         device_id = device["id"]
-        is_up, latency = ping_once(device["ip"])
+        if device["check_type"] == "push":
+            is_up, latency = push_is_up(device["last_push_at"]), None
+        else:
+            is_up, latency = ping_once(device["ip"])
         models.record_status(device_id, is_up, latency)
 
         previous = _last_state.get(device_id)

@@ -27,6 +27,21 @@
     <label class="form-label">SSL 체크 도메인 (선택)</label>
     <input class="form-control" name="ssl_host" value="{{ device.ssl_host or '' }}" placeholder="예: example.com">
   </div>
+  <div class="col-12">
+    <label class="form-label">체크 방식</label>
+    <select class="form-select" name="check_type">
+      <option value="ping" {{ 'selected' if device.check_type != 'push' }}>일반 (서버에서 직접 ping)</option>
+      <option value="push" {{ 'selected' if device.check_type == 'push' }}>에이전트 (사설망 PC/폰 - 하트비트)</option>
+    </select>
+    <div class="form-text">사설망(집/사내) 장비는 서버에서 직접 못 때리니 "에이전트" 선택</div>
+  </div>
+  {% if device.check_type == 'push' and device.push_token %}
+  <div class="col-12">
+    <label class="form-label">에이전트 체크인 URL</label>
+    <input class="form-control mono" readonly value="{{ push_base_url }}/push/{{ device.push_token }}" onclick="this.select()">
+    <div class="form-text">이 URL로 주기적으로 POST 보내는 스크립트를 장비에서 돌리면 됨</div>
+  </div>
+  {% endif %}
   <div class="col-12 mt-3">
     <button class="btn btn-primary">저장</button>
     <a class="btn btn-outline-secondary" href="{{ url_for('devices') }}">취소</a>

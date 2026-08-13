@@ -1,3 +1,4 @@
+import secrets
 import sqlite3
 from datetime import datetime, timedelta
 
@@ -74,6 +75,17 @@ def init_db():
     except sqlite3.OperationalError:
         pass
 
+    for column, ddl in (
+        ("check_type", "ALTER TABLE devices ADD COLUMN check_type TEXT DEFAULT 'ping'"),
+        ("push_token", "ALTER TABLE devices ADD COLUMN push_token TEXT"),
+        ("last_push_at", "ALTER TABLE devices ADD COLUMN last_push_at TEXT"),
+    ):
+        try:
+            conn.execute(ddl)
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+
     conn.close()
 
 
@@ -86,11 +98,13 @@ def list_devices():
     return rows
 
 
-def add_device(name, ip, subnet, location, owner, ssl_host=""):
+def add_device(name, ip, subnet, location, owner, ssl_host="", check_type="ping"):
+    push_token = secrets.token_urlsafe(16) if check_type == "push" else None
     conn = get_db()
     conn.execute(
-        "INSERT INTO devices (name, ip, subnet, location, owner, ssl_host) VALUES (?, ?, ?, ?, ?, ?)",
-        (name, ip, subnet, location, owner, ssl_host or None),
+        "INSERT INTO devices (name, ip, subnet, location, owner, ssl_host, check_type, push_token) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (name, ip, subnet, location, owner, ssl_host or None, check_type, push_token),
     )
     conn.commit()
     conn.close()
@@ -103,11 +117,39 @@ def get_device(device_id):
     return row
 
 
-def update_device(device_id, name, ip, subnet, location, owner, ssl_host=""):
+def get_device_by_token(token):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM devices WHERE push_token = ?", (token,)).fetchone()
+    conn.close()
+    return row
+
+
+def touch_push(token):
+    """Records a heartbeat check-in from an agent. Returns the device row, or None if token is invalid."""
     conn = get_db()
     conn.execute(
-        "UPDATE devices SET name = ?, ip = ?, subnet = ?, location = ?, owner = ?, ssl_host = ? WHERE id = ?",
-        (name, ip, subnet, location, owner, ssl_host or None, device_id),
+        "UPDATE devices SET last_push_at = CURRENT_TIMESTAMP WHERE push_token = ?",
+        (token,),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM devices WHERE push_token = ?", (token,)).fetchone()
+    conn.close()
+    return row
+
+
+def update_device(device_id, name, ip, subnet, location, owner, ssl_host="", check_type="ping"):
+    conn = get_db()
+    push_token = conn.execute(
+        "SELECT push_token FROM devices WHERE id = ?", (device_id,)
+    ).fetchone()["push_token"]
+    if check_type == "push" and not push_token:
+        push_token = secrets.token_urlsafe(16)
+    elif check_type != "push":
+        push_token = None
+    conn.execute(
+        "UPDATE devices SET name = ?, ip = ?, subnet = ?, location = ?, owner = ?, ssl_host = ?, "
+        "check_type = ?, push_token = ? WHERE id = ?",
+        (name, ip, subnet, location, owner, ssl_host or None, check_type, push_token, device_id),
     )
     conn.commit()
     conn.close()
