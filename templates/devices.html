@@ -41,6 +41,7 @@
       <td>{{ d.ssl_host or '' }}</td>
       <td>
         <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('edit_device', device_id=d.id) }}">수정</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('device_configs', device_id=d.id) }}">설정이력</a>
         <form class="d-inline" method="post" action="{{ url_for('delete_device', device_id=d.id) }}">
           <button class="btn btn-sm btn-outline-danger">삭제</button>
         </form>

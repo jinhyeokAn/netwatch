@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-1">설정 변경 diff - {{ device.name }}</h3>
+<p class="text-muted mono mb-3" style="font-size:13px;">
+  {{ previous.taken_at if previous else '(첫 저장)' }} → {{ snapshot.taken_at }}
+  {% if snapshot.taken_by %}· {{ snapshot.taken_by }}{% endif %}
+</p>
+
+{% if diff_lines|length == 0 %}
+  <p class="text-muted">변경 없음.</p>
+{% else %}
+<pre class="mono diff-block">{% for line in diff_lines -%}
+{%- if line.startswith('+++') or line.startswith('---') -%}
+<span class="diff-meta">{{ line }}</span>
+{%- elif line.startswith('@@') -%}
+<span class="diff-hunk">{{ line }}</span>
+{%- elif line.startswith('+') -%}
+<span class="diff-add">{{ line }}</span>
+{%- elif line.startswith('-') -%}
+<span class="diff-del">{{ line }}</span>
+{%- else -%}
+<span class="diff-ctx">{{ line }}</span>
+{%- endif %}
+{% endfor %}</pre>
+{% endif %}
+
+<a class="btn btn-outline-secondary" href="{{ url_for('device_configs', device_id=device.id) }}">설정 이력으로</a>
+{% endblock %}

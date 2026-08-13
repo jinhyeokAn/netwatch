@@ -62,6 +62,14 @@ def init_db():
             detail TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS config_snapshots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+            content TEXT NOT NULL,
+            taken_by TEXT,
+            taken_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
         """
     )
     conn.commit()
@@ -433,3 +441,52 @@ def devices_under_maintenance():
     ).fetchall()
     conn.close()
     return {row["device_id"] for row in rows}
+
+
+# ---------- config snapshots (change management) ----------
+
+def add_config_snapshot(device_id, content, taken_by):
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO config_snapshots (device_id, content, taken_by) VALUES (?, ?, ?)",
+        (device_id, content, taken_by),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_config_snapshots(device_id, limit=30):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, taken_by, taken_at FROM config_snapshots WHERE device_id = ? ORDER BY id DESC LIMIT ?",
+        (device_id, limit),
+    ).fetchall()
+    conn.close()
+    return rows
+
+
+def latest_config_snapshot(device_id):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM config_snapshots WHERE device_id = ? ORDER BY id DESC LIMIT 1",
+        (device_id,),
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def get_config_snapshot(snapshot_id):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM config_snapshots WHERE id = ?", (snapshot_id,)).fetchone()
+    conn.close()
+    return row
+
+
+def get_previous_config_snapshot(device_id, before_id):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM config_snapshots WHERE device_id = ? AND id < ? ORDER BY id DESC LIMIT 1",
+        (device_id, before_id),
+    ).fetchone()
+    conn.close()
+    return row

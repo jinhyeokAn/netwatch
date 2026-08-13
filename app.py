@@ -1,3 +1,4 @@
+import difflib
 import ipaddress
 import os
 
@@ -187,6 +188,68 @@ def delete_device(device_id):
     if device:
         models.log_action(session["username"], "장비 삭제", f"{device['name']} ({device['ip']})")
     return redirect(url_for("devices"))
+
+
+@app.route("/devices/<int:device_id>/configs", methods=["GET", "POST"])
+def device_configs(device_id):
+    device = models.get_device(device_id)
+
+    if request.method == "POST":
+        content = request.form["content"].replace("\r\n", "\n")
+        previous = models.latest_config_snapshot(device_id)
+
+        if previous and previous["content"] == content:
+            flash("이전 버전과 동일함 - 저장 안 함")
+            return redirect(url_for("device_configs", device_id=device_id))
+
+        models.add_config_snapshot(device_id, content, session["username"])
+        models.log_action(session["username"], "설정 저장", f"{device['name']}")
+
+        if previous:
+            diff_lines = list(
+                difflib.unified_diff(
+                    previous["content"].splitlines(),
+                    content.splitlines(),
+                    lineterm="",
+                )
+            )
+            changed = sum(1 for l in diff_lines if l.startswith(("+", "-")) and not l.startswith(("+++", "---")))
+            monitor.send_discord_alert(
+                f"⚙️ 설정변경 감지: {device['name']} - {session['username']}님이 {changed}줄 변경"
+            )
+            flash(f"저장됨 - 이전 버전 대비 {changed}줄 변경")
+        else:
+            flash("첫 번째 설정 저장됨")
+
+        return redirect(url_for("device_configs", device_id=device_id))
+
+    return render_template(
+        "device_configs.html",
+        device=device,
+        snapshots=models.list_config_snapshots(device_id),
+        latest=models.latest_config_snapshot(device_id),
+    )
+
+
+@app.route("/devices/<int:device_id>/configs/<int:snapshot_id>/diff")
+def config_diff(device_id, snapshot_id):
+    device = models.get_device(device_id)
+    snapshot = models.get_config_snapshot(snapshot_id)
+    previous = models.get_previous_config_snapshot(device_id, snapshot_id)
+
+    diff_lines = list(
+        difflib.unified_diff(
+            (previous["content"].splitlines() if previous else []),
+            snapshot["content"].splitlines(),
+            fromfile=previous["taken_at"] if previous else "(없음)",
+            tofile=snapshot["taken_at"],
+            lineterm="",
+        )
+    )
+
+    return render_template(
+        "config_diff.html", device=device, snapshot=snapshot, previous=previous, diff_lines=diff_lines
+    )
 
 
 @app.route("/incidents")

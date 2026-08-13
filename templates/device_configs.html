@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-1">설정 이력 - {{ device.name }}</h3>
+<p class="text-muted mono mb-3" style="font-size:13px;">{{ device.ip }}</p>
+
+<form method="post" class="mb-4">
+  <label class="form-label">현재 설정 붙여넣기 (show running-config 결과 등)</label>
+  <textarea class="form-control mono" name="content" rows="12" placeholder="장비에서 복사한 설정 텍스트 붙여넣기" required>{{ latest.content if latest else '' }}</textarea>
+  <button class="btn btn-primary mt-2">스냅샷 저장</button>
+</form>
+
+<h5 class="mb-2">이전 버전</h5>
+{% if snapshots|length == 0 %}
+  <p class="text-muted">저장된 설정 없음.</p>
+{% else %}
+<table class="table table-striped">
+  <thead><tr><th>저장 시각</th><th>저장자</th><th></th></tr></thead>
+  <tbody>
+    {% for s in snapshots %}
+    <tr>
+      <td class="mono">{{ s.taken_at }}</td>
+      <td>{{ s.taken_by or '-' }}</td>
+      <td><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('config_diff', device_id=device.id, snapshot_id=s.id) }}">diff 보기</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<a class="btn btn-outline-secondary" href="{{ url_for('devices') }}">장비 목록으로</a>
+{% endblock %}
