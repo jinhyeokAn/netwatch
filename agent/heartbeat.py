@@ -10,7 +10,7 @@ import time
 import urllib.error
 import urllib.request
 
-PUSH_URL = "https://YOUR-NETWATCH-URL.onrender.com/push/YOUR_TOKEN"
+PUSH_URL = "https://netwatch-aqbz.onrender.com/push/cqBTZhmOe7Slf9eX0035yw"
 INTERVAL_SEC = 30
 
 while True:

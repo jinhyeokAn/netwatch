@@ -32,8 +32,22 @@ _ssl_days_left = {}        # device_id -> int days remaining (or None)
 _ssl_alerted = set()       # device_ids already alerted for the current low-days episode
 
 
+def _tcp_probe(ip, timeout_sec=2, ports=(443, 80, 22, 53)):
+    """Fallback reachability check via TCP connect - works even where raw
+    ICMP is blocked (common on PaaS containers like Render/Heroku)."""
+    for port in ports:
+        start = time.monotonic()
+        try:
+            with socket.create_connection((ip, port), timeout=timeout_sec):
+                return True, round((time.monotonic() - start) * 1000, 1)
+        except OSError:
+            continue
+    return False, None
+
+
 def ping_once(ip, timeout_sec=2):
-    """Real ICMP ping via the OS ping command. Returns (is_up, latency_ms)."""
+    """Real ICMP ping via the OS ping command, falling back to a TCP connect
+    probe when ICMP is unavailable or blocked. Returns (is_up, latency_ms)."""
     if platform.system().lower() == "windows":
         cmd = ["ping", "-n", "1", "-w", str(timeout_sec * 1000), ip]
     else:
@@ -42,10 +56,10 @@ def ping_once(ip, timeout_sec=2):
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_sec + 2)
     except (subprocess.TimeoutExpired, OSError):
-        return False, None
+        return _tcp_probe(ip, timeout_sec)
 
     if result.returncode != 0:
-        return False, None
+        return _tcp_probe(ip, timeout_sec)
 
     match = _LATENCY_RE.search(result.stdout)
     latency = float(match.group(1)) if match else None
